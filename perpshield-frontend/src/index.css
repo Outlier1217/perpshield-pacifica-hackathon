@@ -109,3 +109,58 @@ code {
   padding: 4px 8px;
   background: var(--code-bg);
 }
+
+/* Mobile Responsiveness */
+@media (max-width: 768px) {
+  .vault-grid {
+    grid-template-columns: 1fr !important;
+  }
+  
+  button, .tx-button {
+    font-size: 12px !important;
+    padding: 8px 12px !important;
+  }
+  
+  .stat-card {
+    padding: 16px !important;
+  }
+  
+  .header-nav {
+    gap: 2px !important;
+  }
+  
+  .header-nav button {
+    padding: 5px 10px !important;
+    font-size: 11px !important;
+  }
+  
+  .logo span:not(:first-child) {
+    font-size: 16px !important;
+  }
+  
+  .shield-gauge svg {
+    width: 80px !important;
+    height: 80px !important;
+  }
+}
+
+@media (max-width: 640px) {
+  .header-inner {
+    flex-direction: column !important;
+    height: auto !important;
+    padding: 12px !important;
+    gap: 12px !important;
+  }
+  
+  .logo {
+    font-size: 18px !important;
+  }
+  
+  .action-buttons {
+    grid-template-columns: 1fr !important;
+  }
+  
+  .stats-grid {
+    grid-template-columns: 1fr !important;
+  }
+}
