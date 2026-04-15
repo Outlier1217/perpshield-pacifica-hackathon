@@ -131,8 +131,9 @@ export default function PerpShieldDashboard() {
 
 
 // ==================== INITIALIZE VAULT MINT - WORKING VERSION ====================
+// Agar ye function hai toh isko replace karo
 const initializeVaultMint = async () => {
-  if (!publicKey || !wallet?.adapter) {
+  if (!publicKey || !sendTransaction) {
     toast.error('Please connect your wallet first');
     return;
   }
@@ -141,7 +142,6 @@ const initializeVaultMint = async () => {
   const toastId = toast.loading('Creating vault mint...');
   
   try {
-    // ✅ Use regular Keypair, not PDA
     const mintKeypair = getVaultMintKeypair();
     const vaultMint = mintKeypair.publicKey;
     const accountInfo = await connection.getAccountInfo(vaultMint);
@@ -152,11 +152,7 @@ const initializeVaultMint = async () => {
       return;
     }
 
-    console.log("🏦 Creating Vault Mint at:", vaultMint.toString());
-    console.log("Mint Keypair public key:", mintKeypair.publicKey.toString());
-
     const mintRent = await connection.getMinimumBalanceForRentExemption(MINT_SIZE);
-
     const transaction = new Transaction();
     
     transaction.add(
@@ -167,47 +163,29 @@ const initializeVaultMint = async () => {
         space: MINT_SIZE,
         programId: TOKEN_PROGRAM_ID,
       }),
-      createInitializeMintInstruction(
-        vaultMint,
-        6,
-        publicKey,
-        null
-      )
+      createInitializeMintInstruction(vaultMint, 6, publicKey, null)
     );
 
+    // ✅ USE sendTransaction instead of signTransaction
     const { blockhash, lastValidBlockHeight } = await connection.getLatestBlockhash('confirmed');
     transaction.recentBlockhash = blockhash;
     transaction.feePayer = publicKey;
-
-    // ✅ CRITICAL: Sign with the mint keypair (it's a real signer now!)
+    
     transaction.partialSign(mintKeypair);
+    const signature = await sendTransaction(transaction, connection);
     
-    // Sign with wallet
-    const signed = await wallet.adapter.signTransaction(transaction);
-    
-    const signature = await connection.sendRawTransaction(signed.serialize(), {
-      skipPreflight: false,
-      preflightCommitment: 'confirmed',
-    });
-
     await connection.confirmTransaction({
       signature,
       blockhash,
       lastValidBlockHeight,
     }, 'confirmed');
 
-    toast.success(`✅ Vault Mint Created! TX: ${signature.slice(0, 8)}...`, { id: toastId });
+    toast.success(`✅ Vault Mint Created!`, { id: toastId });
     setVaultMintInitialized(true);
 
   } catch (error: any) {
     console.error("Vault Mint Error:", error);
-    
-    if (error?.message?.includes('already in use')) {
-      toast.success('✅ Vault Mint already exists!', { id: toastId });
-      setVaultMintInitialized(true);
-    } else {
-      toast.error(`Failed: ${error?.message || 'Unknown error'}`, { id: toastId });
-    }
+    toast.error(`Failed: ${error?.message || 'Unknown error'}`, { id: toastId });
   } finally {
     setLoading(false);
   }
